@@ -171,8 +171,7 @@ class _MyHomePageState extends State<MyHomePage> {
           userName: db.username ?? 'root',
           password: db.password,
           maxConnections: 10,
-          databaseName: db.databaseName,
-          secure: true);
+          databaseName: db.databaseName);
       viewName = "DatabaseView";
     });
   }
@@ -425,11 +424,23 @@ class CodeEditor extends StatefulWidget {
 
 class _CodeEditorState extends State<CodeEditor> {
   CodeController? _codeController;
+  final ScrollController _codeVerticalScrollController = ScrollController();
+  final _codeFieldFocusNode = FocusNode();
 
   @override
   void initState() {
     _codeController = CodeController(
-      text: "SELECT * FROM users LIMIT 100;",
+      text: '''SELECT
+  *
+FROM
+  (
+    SELECT
+      *
+    FROM
+      users
+  ) as u
+LIMIT 100;
+''',
       language: sql,
     );
     super.initState();
@@ -446,21 +457,32 @@ class _CodeEditorState extends State<CodeEditor> {
     return _codeController != null
         ? CodeTheme(
             data: CodeThemeData(styles: monokaiSublimeTheme),
-            child: SingleChildScrollView(
-                child: CodeField(
-              controller: _codeController!,
-              textStyle: const TextStyle(
-                  fontFamily: 'SF Mono',
-                  fontSize: 14,
-                  height: 1.5,
-                  fontWeight: FontWeight.w600),
-              gutterStyle: const GutterStyle(
-                  textStyle: TextStyle(
-                      fontFamily: 'SF Mono',
-                      fontSize: 14,
-                      height: 1.5,
-                      fontWeight: FontWeight.w600)),
-            )))
+            child: SizedBox(
+                height: MediaQuery.of(context).size.height / 2,
+                width: MediaQuery.of(context).size.width,
+                child: AdaptiveScrollbar(
+                    controller: _codeVerticalScrollController,
+                    underColor: Colors.blueGrey.withOpacity(0.3),
+                    sliderDefaultColor: Colors.grey.withOpacity(0.7),
+                    sliderActiveColor: Colors.grey,
+                    child: SingleChildScrollView(
+                        controller: _codeVerticalScrollController,
+                        scrollDirection: Axis.vertical,
+                        child: CodeField(
+                          focusNode: _codeFieldFocusNode,
+                          controller: _codeController!,
+                          textStyle: const TextStyle(
+                              fontFamily: 'SF Mono',
+                              fontSize: 14,
+                              height: 1.5,
+                              fontWeight: FontWeight.w600),
+                          gutterStyle: const GutterStyle(
+                              textStyle: TextStyle(
+                                  fontFamily: 'SF Mono',
+                                  fontSize: 14,
+                                  height: 1.5,
+                                  fontWeight: FontWeight.w600)),
+                        )))))
         : const Text("Loading Code Field");
   }
 }
