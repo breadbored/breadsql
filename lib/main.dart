@@ -2,12 +2,12 @@ import 'dart:convert';
 
 import 'package:adaptive_scrollbar/adaptive_scrollbar.dart';
 import 'package:bread_sql/utils/dbUriParser.dart';
-import 'package:code_text_field/code_text_field.dart';
-import 'package:highlight/languages/sql.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_code_editor/flutter_code_editor.dart';
 import 'package:mysql_client/mysql_client.dart';
-import 'package:resizable_widget/resizable_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:highlight/languages/sql.dart';
+import 'package:flutter_highlight/themes/monokai-sublime.dart';
 
 void main() {
   runApp(const MyApp());
@@ -55,7 +55,7 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
   }
 
-  void _getCurrentView() {
+  void _getCurrentView(BuildContext context) {
     switch (viewName) {
       case "SelectDatabaseView":
         currentView = SelectDatabaseView(
@@ -76,7 +76,7 @@ class _MyHomePageState extends State<MyHomePage> {
       case "DatabaseView":
         currentView = Container(
             child: Column(children: [
-          Expanded(child: CodeEditor()),
+          CodeEditor(),
           if (_queryResult != null && _queryResult!.isNotEmpty)
             Expanded(
                 child: AdaptiveScrollbar(
@@ -257,7 +257,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    _getCurrentView();
+    _getCurrentView(context);
     return Scaffold(
       appBar: AppBar(
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -427,6 +427,15 @@ class _CodeEditorState extends State<CodeEditor> {
   CodeController? _codeController;
 
   @override
+  void initState() {
+    _codeController = CodeController(
+      text: "SELECT * FROM users LIMIT 100;",
+      language: sql,
+    );
+    super.initState();
+  }
+
+  @override
   void dispose() {
     _codeController?.dispose();
     super.dispose();
@@ -434,12 +443,24 @@ class _CodeEditorState extends State<CodeEditor> {
 
   @override
   Widget build(BuildContext context) {
-    return CodeField(
-      controller: CodeController(
-        text: "SELECT * FROM users LIMIT 100;",
-        language: sql,
-      ),
-      textStyle: const TextStyle(fontFamily: 'SourceCode'),
-    );
+    return _codeController != null
+        ? CodeTheme(
+            data: CodeThemeData(styles: monokaiSublimeTheme),
+            child: SingleChildScrollView(
+                child: CodeField(
+              controller: _codeController!,
+              textStyle: const TextStyle(
+                  fontFamily: 'SF Mono',
+                  fontSize: 14,
+                  height: 1.5,
+                  fontWeight: FontWeight.w600),
+              gutterStyle: const GutterStyle(
+                  textStyle: TextStyle(
+                      fontFamily: 'SF Mono',
+                      fontSize: 14,
+                      height: 1.5,
+                      fontWeight: FontWeight.w600)),
+            )))
+        : const Text("Loading Code Field");
   }
 }
